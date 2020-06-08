@@ -25,6 +25,8 @@ SECRET_KEY = 'zjnuwj((2u&zlp4w$a$)eo!l=l@7ed!vv$@&$3l)0#))g!&2ud'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+CORS_ORIGIN_ALLOW_ALL = True
+
 ALLOWED_HOSTS = []
 
 
