@@ -16,7 +16,7 @@ def login(request, format=None):
     
     user = authenticate(username=request.data['email'], password=request.data['password'])
     if user is None:
-        return Response({'error': 'User cannot be found'})
+        return Response({'error': 'User cannot be found'}, 401)
 
     token, created = Token.objects.get_or_create(user=user)
     response_data = UserSerializer(user).data
