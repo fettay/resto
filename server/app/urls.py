@@ -1,4 +1,4 @@
-from app.controllers import login
+from app.controllers import *
 from django.conf.urls import url, include
 from rest_framework import routers
 
@@ -11,5 +11,6 @@ router = routers.DefaultRouter()
 # Additionally, we include login URLs for the browsable API.
 urlpatterns = [
     url(r'^', include(router.urls)),
-    url(r'^login', login)
+    url(r'^login', login),
+    url(r'^orders_count', orders_counts)
 ]
