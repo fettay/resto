@@ -9,8 +9,8 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
         fields = ['id', 'email', 'first_name', 'last_name']
 
 
-class OwnerSerializer(serializers.HyperlinkedModelSerializer):
+class OrderSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Order
-        fields = ['order_id', 'owner_id', 'order_number', 'amount', 'date',
+        fields = ['order_id', 'order_number', 'amount', 'date',
                   'restaurant', 'status', 'service']

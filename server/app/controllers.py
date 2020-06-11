@@ -1,5 +1,5 @@
-from app.serializers import UserSerializer
-from app.django_queries import get_orders_count
+from app.serializers import UserSerializer, OrderSerializer
+from app.django_queries import *
 from app.core import Aggregator
 
 from django.contrib.auth.models import User
@@ -34,6 +34,16 @@ def orders_counts(request, format=None):
     query = get_orders_count(request.user, Aggregator.DAY)
     data = query.all()
     return Response(data)
+
+
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def last_orders(request, format=None):
+    query = get_last_orders(request.user)
+    data = query.all()
+    serialized_list = [OrderSerializer(order, context={'request': request}).data for order in data]
+    return Response(serialized_list)
 
 
 # @api_view(['GET'])
