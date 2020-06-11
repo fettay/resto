@@ -10,3 +10,8 @@ def get_orders_count(user: User, aggregator: Aggregator):
     values('created_day').\
     annotate(count=Count('*'))
     return qs
+
+
+def get_last_orders(user: User):
+    qs = Order.objects.filter(owner_id=user.id).order_by('-date')[:10]
+    return qs
