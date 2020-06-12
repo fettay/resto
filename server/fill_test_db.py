@@ -21,13 +21,14 @@ def create_users():
         user.save()
 
 def create_orders():
-    df_orders = pd.read_csv('data/orders.csv') 
+    df_orders = pd.read_csv('data_test/orders.csv') 
     orders_list = []
     owner = User.objects.get(pk=1)
     for _, row in df_orders.iterrows():
         row['owner_id'] = owner
         row['order_id'] = row['orderid']
         del row['orderid']
+        del row['service']
 
         orders_list.append(Order(**row))
     try:

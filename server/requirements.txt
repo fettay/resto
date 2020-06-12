@@ -4,3 +4,5 @@ djangorestframework
 markdown
 django-filter
 pandas
+tqdm
+requests
