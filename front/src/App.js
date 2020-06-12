@@ -19,13 +19,8 @@ import Jumbotron from './elements/jumbotron'
 import Backdrops from './elements/backdrops'
 
 import Routes from './Routes'
-import login from './pages/login'
 
 
-import {Link} from 'react-router-dom'
-
-
-/*
 class App extends Component {
   render() {
     let {
@@ -63,20 +58,6 @@ class App extends Component {
               </div>
             </div>
           </div>
-        </div>
-      </ConnectedRouter>
-    )
-  }
-}
-*/
-
-class App extends Component {
-  render() {
-    return (
-      <ConnectedRouter history={history}>
-
-        <div>
-         <Link to="/demo/demo1"> gzllo </Link>
         </div>
       </ConnectedRouter>
     )

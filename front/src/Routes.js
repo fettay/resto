@@ -101,7 +101,7 @@ import login from './pages/login'
 
 const Routes = () => (
   <Switch>
-    <Route exact path="/" component={Demo1} />
+    <Route exact path="/" component={login} />
     <Route path="/charts/chartist" component={Chartist} />
     <Route path="/charts/recharts" component={Recharts} />
     <Route path="/dashboards/analytics" component={Analytics} />

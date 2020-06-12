@@ -2,6 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import '../css/activity-widgets/activity-widget-1.css'
 
+/*
 const ActivityWidget1 = ({items, amount}) => (
   <div className="activity-widget-1">
     <table className="table table-striped table-unbordered">
@@ -35,3 +36,24 @@ ActivityWidget1.propTypes = {
 }
 
 export default ActivityWidget1
+*/
+
+class ActivityWidget1 extends Component{
+  constructor(props) {
+    super(props);
+    this.state = {data}
+  } 
+  loadData2(){
+    const token = localStorage.getItem('token');
+    axios
+    .get(
+      "http://localhost:8000/orders_counts",
+      {
+        headers:{'Authorization': token}
+      })
+      .then()
+    }
+
+
+
+}
