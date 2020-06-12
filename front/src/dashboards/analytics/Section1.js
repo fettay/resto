@@ -67,8 +67,7 @@ const widgets = [
       color: 'default',
       subtitle: 'Sales',
       title: '154',
-      percent: '-4%',
-      percentColor: 'danger',
+
       align: 'left',
       padding: 0,
       data: chartData()
