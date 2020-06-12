@@ -13,5 +13,6 @@ urlpatterns = [
     url(r'^', include(router.urls)),
     url(r'^login', login),
     url(r'^orders_count', orders_counts),
+    url(r'^meals_count', meals_count),
     url(r'^last_orders', last_orders)
 ]

@@ -17,9 +17,11 @@ DEFAULT_FETCH_FROM = 30
 def create_user():
     email = input('Enter email for the new user: ')
     password = getpass('Enter password for the new user: ')
-    user, created = User.objects.get_or_create(email=email, username=email, password=password)
+    user, created = User.objects.get_or_create(email=email, username=email)
     if created:
         print("Successfully created user")
+        user.set_password(password)
+        user.save()
     else:
         print("Successfully retrieved user")
     return user

@@ -46,6 +46,15 @@ def last_orders(request, format=None):
     return Response(serialized_list)
 
 
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def meals_count(request, format=None):
+    query = get_meals_count(request.user)
+    data = query.all()
+    return Response(data)
+
+
 # @api_view(['GET'])
 # @authentication_classes([SessionAuthentication])
 # @permission_classes([IsAuthenticated])

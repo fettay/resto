@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from app.models import Order
+from app.models import Order, Meal
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -14,3 +14,11 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
         model = Order
         fields = ['order_id', 'order_number', 'amount', 'date',
                   'restaurant', 'status', 'service']
+
+
+class MealSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Meal
+        fields = ['owner_id', 'restaurant', 'category', 'title',
+                  'date', 'quantity', 'provider']
+

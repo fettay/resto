@@ -43,7 +43,7 @@ class DeliverooApi(ProviderApi):
             Credentials.objects.get(owner_id=self._user, provider=PROVIDER_NAME)
             print("Already found credentials for the user")
             return
-        except Credentials.DoesNotExist():
+        except Credentials.DoesNotExist:
             pass
         while True:
             email = input("Enter your deliveroo-hub username: ")
