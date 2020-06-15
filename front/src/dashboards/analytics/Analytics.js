@@ -18,18 +18,7 @@ const Dashboard = () => (
         <Section3 />
       </div>
     </div>
-    <div className="row">
-      <div className="col-12 col-md-12 col-xl-4">
-        <Section4 />
-      </div>
-      <div className="col-12 col-md-12 col-xl-4">
-        <Section5 />
-      </div>
-      <div className="col-12 col-md-12 col-xl-4">
-        <Section6 />
-      </div>
-    </div>
-    <Section7 />
+   
   </div>
 )
 export default Dashboard

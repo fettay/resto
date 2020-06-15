@@ -1,23 +1,29 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import '../css/activity-widgets/activity-widget-1.css'
+import axios from "axios"
+import moment from 'moment'
+import Moment from 'react-moment'
+import 'moment/min/moment-with-locales'
 
-/*
+
+moment.locale('fr');
+
 const ActivityWidget1 = ({items, amount}) => (
   <div className="activity-widget-1">
     <table className="table table-striped table-unbordered">
       <tbody>
+      
         {items.slice(0, amount).map((item, i) => (
           <tr key={i}>
             <td>
-              <span
-                className={`badge badge-sm badge-${item.badge} badge-outline`}>
+              <span>
                 {item.type}
               </span>
             </td>
             <td>{item.title}</td>
             <td>
-              <span className="text-xs">{item.date}</span>
+          <Moment fromNow className="text-xs">{item.date}</Moment>
             </td>
           </tr>
         ))}
@@ -36,7 +42,7 @@ ActivityWidget1.propTypes = {
 }
 
 export default ActivityWidget1
-*/
+/*
 
 class ActivityWidget1 extends Component{
   constructor(props) {
@@ -57,3 +63,4 @@ class ActivityWidget1 extends Component{
 
 
 }
+*/
