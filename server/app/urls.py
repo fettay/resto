@@ -14,5 +14,6 @@ urlpatterns = [
     url(r'^login', login),
     url(r'^orders_count', orders_counts),
     url(r'^meals_count', meals_count),
-    url(r'^last_orders', last_orders)
+    url(r'^last_orders', last_orders),
+    url(r'^top_numbers', top_numbers)
 ]

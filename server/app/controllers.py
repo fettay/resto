@@ -1,6 +1,7 @@
 from app.serializers import UserSerializer, OrderSerializer
 from app.django_queries import *
 from app.core import Aggregator
+from app.stats import compute_evolution
 
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
@@ -55,6 +56,19 @@ def meals_count(request, format=None):
         top = int(top)
     query = get_meals_count(request.user, top)
     data = query.all()
+    return Response(data)
+
+
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def top_numbers(request, format=None):
+    data_list = {'orders': (get_orders_count(request.user, Aggregator.DAY).all(), 'sum'),
+                 'sales': (get_sales_count(request.user, Aggregator.DAY).all(), 'sum'),
+                 'sales_avg': (get_avg_sales(request.user, Aggregator.DAY).all(), 'mean'),
+                 'reviews': (get_avg_review(request.user, Aggregator.DAY).all(), 'mean')}
+    data = {k: compute_evolution(v[0], 7, 'created_day', v[1]) for k, v in data_list.items()}
+    data = {k: {'value': value, 'change': change} for k, (value, change) in data.items()}
     return Response(data)
 
 
