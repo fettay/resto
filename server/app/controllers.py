@@ -50,7 +50,10 @@ def last_orders(request, format=None):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def meals_count(request, format=None):
-    query = get_meals_count(request.user)
+    top = request.GET.get('top', None)
+    if top is not None:
+        top = int(top)
+    query = get_meals_count(request.user, top)
     data = query.all()
     return Response(data)
 

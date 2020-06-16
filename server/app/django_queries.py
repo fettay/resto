@@ -15,8 +15,15 @@ def get_last_orders(user: User):
     qs = Order.objects.filter(owner_id=user.id).order_by('-date')[:10]
     return qs
 
-def get_meals_count(user: User):
-    qs = Meal.objects.filter(owner_id=user.id)\
-                      .values('title')\
-                      .annotate(count=Sum('quantity'))
+def get_meals_count(user: User, top: int):
+    if top is not None:
+        qs = Meal.objects.filter(owner_id=user.id)\
+                        .values('title')\
+                        .annotate(count=Sum('quantity'))\
+                        .order_by('-count')[:top]
+    else:
+        qs = Meal.objects.filter(owner_id=user.id)\
+                        .values('title')\
+                        .annotate(count=Sum('quantity')).order_by('-count')
+
     return qs
