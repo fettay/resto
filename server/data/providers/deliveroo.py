@@ -43,7 +43,7 @@ class DeliverooApi(ProviderApi):
         return response
 
     def _get_credentials(self):
-        cred = Credentials.objects.get(owner_id=self._user, provider=PROVIDER_NAME).credentials
+        cred = Credentials.objects.get(owner=self._user, provider=PROVIDER_NAME).credentials
         return json.loads(cred)
 
     @staticmethod
@@ -55,7 +55,7 @@ class DeliverooApi(ProviderApi):
 
     def set_credentials(self):
         try:
-            Credentials.objects.get(owner_id=self._user, provider=PROVIDER_NAME)
+            Credentials.objects.get(owner=self._user, provider=PROVIDER_NAME)
             print("Already found credentials for the user")
             return
         except Credentials.DoesNotExist:
@@ -68,7 +68,7 @@ class DeliverooApi(ProviderApi):
                 break
             except LoginError:
                 print("Invalid credentials retrying")
-        credentials = Credentials(owner_id=self._user, provider=PROVIDER_NAME,
+        credentials = Credentials(owner=self._user, provider=PROVIDER_NAME,
                                   credentials=json.dumps({'email': email, 'password': password}))
         credentials.save()
 
@@ -93,13 +93,13 @@ class DeliverooApi(ProviderApi):
                       'date': pd.Timestamp(order['timeline']['placed_at']).to_pydatetime(),
                       'provider': PROVIDER_NAME,
                       'restaurant': restaurant,
-                      'owner_id': self._user}
+                      'owner': self._user}
         
         return Order(**order_dict)
 
     def _format_restaurant(self, restaurant):
         resto_dict = {'resto_id': restaurant['id'], 
-                      'owner_id': self._user, 
+                      'owner': self._user, 
                       'name': restaurant['name'], 
                       'latitude': restaurant['location']['lat'], 
                       'longitude': restaurant['location']['lng'],
@@ -113,7 +113,7 @@ class DeliverooApi(ProviderApi):
                       'date': pd.Timestamp(date, tz=TIMEZONE).floor("1d").to_pydatetime(),
                       'provider': PROVIDER_NAME,
                       'restaurant': restaurant,
-                      'owner_id': self._user,
+                      'owner': self._user,
                       'quantity': order['quantity']}
         
         return Meal(**meal_dict)
@@ -121,7 +121,7 @@ class DeliverooApi(ProviderApi):
 
     def _format_review(self, review, restaurant):
 
-        review_dict = {'owner_id': self._user, 
+        review_dict = {'owner': self._user, 
                       'restaurant': restaurant,
                       'provider': PROVIDER_NAME,
                       'date': pd.Timestamp(review['created_at']).to_pydatetime(),
@@ -129,7 +129,7 @@ class DeliverooApi(ProviderApi):
                       'rating': review['rating_stars']}
         
         review_object = Review(**review_dict)
-        review_object.order_id_id = review['order_uuid']
+        review_object.order_id = review['order_uuid']
         return review_object
 
 
@@ -148,11 +148,11 @@ class DeliverooApi(ProviderApi):
             new_reviews = [self._format_review(r, resto) for r in reviews['reviews']]
             new_reviews = [r for r in new_reviews if r is not None and r.date >= date]
 
-            if len(new_reviews) == 0 or (last_fetched_id is not None and new_reviews[-1].order_id_id == new_reviews[-1].order_id_id):
+            if len(new_reviews) == 0 or (last_fetched_id is not None and new_reviews[-1].order_id == new_reviews[-1].order_id):
                 break 
 
             all_reviews.extend(new_reviews)
-            last_fetched_id = all_reviews[-1].order_id_id
+            last_fetched_id = all_reviews[-1].order_id
     
         return all_reviews
 
