@@ -1,22 +1,29 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from app.models import Order, Meal
+from app.models import Order, Meal, Restaurant
 
 
-class UserSerializer(serializers.HyperlinkedModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'email', 'first_name', 'last_name']
 
 
-class OrderSerializer(serializers.HyperlinkedModelSerializer):
+class RestaurantSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Restaurant
+        fields = ['resto_id', 'name']
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    restaurant = RestaurantSerializer()
     class Meta:
         model = Order
-        fields = ['order_id', 'order_number', 'amount', 'date',
-                  'restaurant', 'status']
+        fields = ['order_id', 'restaurant', 'order_number', 'amount', 'date', 'status']
+        depth = 1
 
 
-class MealSerializer(serializers.HyperlinkedModelSerializer):
+class MealSerializer(serializers.ModelSerializer):
     class Meta:
         model = Meal
         fields = ['owner_id', 'restaurant', 'category', 'title',

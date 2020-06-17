@@ -48,7 +48,7 @@ class Meal(models.Model):
 
 
 class Review(models.Model):
-    order_id = models.ForeignKey(to=Order, on_delete=models.DO_NOTHING, primary_key=True)
+    order_id = models.OneToOneField(to=Order, on_delete=models.DO_NOTHING, primary_key=True)
     owner_id = models.ForeignKey(to=User, on_delete=models.DO_NOTHING)
     restaurant = models.ForeignKey(to=Restaurant, on_delete=models.DO_NOTHING)
     date = models.DateTimeField()
