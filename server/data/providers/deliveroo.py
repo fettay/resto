@@ -12,12 +12,13 @@ from datetime import datetime
 from urllib.parse import quote
 from getpass import getpass
 from collections import namedtuple
+from multiprocessing import Pool
 
 
 LOGIN_URL = "https://restaurant-hub.deliveroo.net/api/session"
 RESTO_URL = "https://restaurant-hub.deliveroo.net/api/restaurants/{restaurant_id}"
 ORDERS_URL = RESTO_URL + "/orders?date={date}&end_date={date}&starting_after={start_after}&sort_date={sort_date}&with_summary=no"
-ITEMS_URL = RESTO_URL + "/order_items?start_date={date}&end_date={date}&group_modifiers=true"
+ITEMS_URL  = "https://restaurant-hub.deliveroo.net/api/orders/{order_id}"
 REVIEWS_URL = RESTO_URL + "/reviews?stars=&sort_date={sort_date}&starting_after={start_after}"
 TIMEZONE = "Europe/Paris"
 PROVIDER_NAME = 'Deliveroo'
@@ -26,19 +27,32 @@ PROVIDER_NAME = 'Deliveroo'
 MySqlInput = namedtuple('MySqlInput', ['model', 'data'])
 
 
+@retry(ValueError, tries=5, delay=2)
+def _get_order_meal_single(args):
+    token, order_id = args
+    response = requests.get(ITEMS_URL.format(order_id=order_id), headers={'authorization': token})
+    if response.status_code != 200:
+        raise ValueError
+    items =  response.json()['items']
+    all_meals = []
+    for item in items:
+        all_meals.append((item['name'], item['quantity'], item['category_name']))
+        for modifier in item.get('modifiers', []):
+            all_meals.append((modifier['name'], item['quantity'], 'Modifiers'))
+    return all_meals
+
+
 class DeliverooApi(ProviderApi):
 
     def __init__(self, user):
         self._token = None
         self.restaurants = None
-        self._mysqlcursor = None 
         super().__init__(user)
 
     @retry(ValueError, tries=5, delay=2)
     def _request(self, url):
         response = requests.get(url, headers={'authorization': self._token})
         if response.status_code != 200:
-            print('hello')
             raise ValueError
         return response
 
@@ -107,17 +121,16 @@ class DeliverooApi(ProviderApi):
         
         return Restaurant(**resto_dict)
 
-    def _format_meal(self, order, restaurant, date):
-        meal_dict = {'category': order['category_name'].lower(),
-                      'title': order['name'].lower(), 
-                      'date': pd.Timestamp(date, tz=TIMEZONE).floor("1d").to_pydatetime(),
+    def _format_meal(self, meal, order):
+        meal_dict = {'category': meal[2].lower(),
+                      'title': meal[0].lower(), 
                       'provider': PROVIDER_NAME,
-                      'restaurant': restaurant,
                       'owner': self._user,
-                      'quantity': order['quantity']}
-        
-        return Meal(**meal_dict)
+                      'quantity': meal[1]}
 
+        meal_object = Meal(**meal_dict)
+        meal_object.order_id = order.order_id
+        return meal_object
 
     def _format_review(self, review, restaurant):
 
@@ -132,11 +145,13 @@ class DeliverooApi(ProviderApi):
         review_object.order_id = review['order_uuid']
         return review_object
 
-
     def _get_reviews_by_resto(self, resto, date):
         last_fetched_id = None
         all_reviews = []
-        date = date.tz_localize('UTC')
+
+        if date.tz is None:
+            date = date.tz_localize('UTC')
+
         date_str = (date + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
         while True:
             if last_fetched_id is None:
@@ -156,10 +171,13 @@ class DeliverooApi(ProviderApi):
     
         return all_reviews
 
-
-    def _get_orders_by_resto(self, resto, date):
-        last_timestamp = None
-        last_fetched_id = None
+    def _get_orders_by_resto(self, resto, date, last_order):
+        if last_order is None:
+            last_timestamp = None
+            last_fetched_id = None
+        else:
+            last_timestamp = pd.Timestamp.now(tz=TIMEZONE)
+            last_fetched_id = last_order.order_id
         all_orders = []
         while True:
             date_str = date.strftime("%Y-%m-%d")
@@ -173,8 +191,9 @@ class DeliverooApi(ProviderApi):
 
             orders = self._request(url).json()
             new_orders = [self._format_order(o, resto) for o in orders['orders']]
+            
 
-            if len(new_orders) == 0 or (last_timestamp is not None and new_orders[-1].order_id == all_orders[-1].order_id):
+            if len(new_orders) == 0 or (last_timestamp is not None and len(all_orders) > 0 and new_orders[-1].order_id == all_orders[-1].order_id):
                 break 
 
             all_orders.extend(new_orders)
@@ -182,15 +201,18 @@ class DeliverooApi(ProviderApi):
             last_timestamp = all_orders[-1].date
         return all_orders
 
-    def _get_meals_by_resto(self, resto, date):
-        items_sold_url = ITEMS_URL.format(restaurant_id=resto.resto_id, date=date.strftime('%Y-%m-%d'))
-        meals = self._request(items_sold_url).json()
-        meals = [self._format_meal(m, resto, date) for m in meals]
+    def _get_meals_by_resto(self, orders):
+        args = [(self._token, order.order_id) for order in orders]
+
+        with Pool(10) as p:
+            all_items = p.map(_get_order_meal_single, args)
+        
+        meals = [self._format_meal(item, order) for items, order in zip(all_items, orders) for item in items]
         return meals
 
-    def _fetch_restaurant_data(self, resto, date):
-        all_orders = self._get_orders_by_resto(resto, date)
-        all_meals = self._get_meals_by_resto(resto, date)
+    def _fetch_restaurant_data(self, resto, date, last_order=None):
+        all_orders = self._get_orders_by_resto(resto, date, last_order)
+        all_meals = self._get_meals_by_resto(all_orders)
         all_reviews = self._get_reviews_by_resto(resto, date)
         return all_orders, all_meals, all_reviews
 
@@ -205,26 +227,43 @@ class DeliverooApi(ProviderApi):
         self._user.save()
         today = pd.Timestamp.today().floor("1d")
         print('Hey %s, we are loading your data' % (self._user.first_name))
-        for i in tqdm(range(ndays + 1, 0, -1), total=ndays):
+        for i in tqdm(range(ndays, -1, -1), total=ndays):
             date = today - pd.Timedelta(days=i)
             my_sql_data = self.get_data_per_date(date)
             self.insert_to_mysql(my_sql_data)
     
     def update_data(self):
-        last_fetched_date = self._get_last_fetched()
+        last_order = self._get_last_fetched()
         today = pd.Timestamp.today().floor("1d")
+        last_fetched_date = pd.Timestamp(last_order.date).tz_localize(None)
         number_of_days = (today - last_fetched_date).days
-        for i in range(number_of_days + 2):
+
+        # Days starting from scatch
+        for i in range(number_of_days + 1):
             date = last_fetched_date + pd.Timedelta(days=i)
             my_sql_data = self.get_data_per_date(date)
             self.insert_to_mysql(my_sql_data)
+        
+        # Last day only update
+        self.get_last_data(last_order)
+
+    def get_last_data(self, last_order):
+        all_orders = []
+        all_meals = []
+        all_reviews = []
+        for resto in self.restaurants:
+            resto = Restaurant.objects.get(resto_id=resto['id'])
+            resto_orders, resto_meals, resto_reviews = self._fetch_restaurant_data(resto, pd.Timestamp(last_order.date), last_order=last_order)
+            all_meals.extend(resto_meals)
+            all_orders.extend(resto_orders)
+            all_reviews.extend(resto_reviews)
+        return [MySqlInput(Order, all_orders), MySqlInput(Meal, all_meals), MySqlInput(Review, all_reviews)]
             
     def get_data_per_date(self, date=None):
         all_orders = []
         all_meals = []
         all_reviews = []
         for resto in self.restaurants:
-            last_fetched = pd.Timestamp.today(tz=TIMEZONE).floor("1d")
             resto = Restaurant.objects.get(resto_id=resto['id'])
             resto_orders, resto_meals, resto_reviews = self._fetch_restaurant_data(resto, date)
             all_meals.extend(resto_meals)
@@ -236,10 +275,9 @@ class DeliverooApi(ProviderApi):
         for inp in my_sql_input:
             inp.model.objects.bulk_create(inp.data, ignore_conflicts=True)
         
-
     def _get_last_fetched(self):
-        a = self._mysqlcursor.execute("SELECT MAX(date) from orders;")
-        return self._mysqlcursor.fetchone()[0]
+        last_order = Order.objects.filter(owner=self._user).latest('date')
+        return last_order
 
 
 DELIVEROO = Provider(PROVIDER_NAME, DeliverooApi)

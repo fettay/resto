@@ -36,16 +36,11 @@ class Credentials(models.Model):
 
 class Meal(models.Model):
     owner = models.ForeignKey(to=User, on_delete=models.DO_NOTHING)
-    # order = models.ForeignKey(to=Order, on_delete=models.DO_NOTHING)
-    restaurant = models.ForeignKey(to=Restaurant, on_delete=models.DO_NOTHING)
+    order = models.ForeignKey(to=Order, on_delete=models.DO_NOTHING)
     category = models.CharField(max_length=200)
     title = models.CharField(max_length=200)
-    date = models.DateTimeField()
     quantity = models.IntegerField()
     provider = models.CharField(max_length=50)
-
-    class Meta:
-        unique_together = (("owner", "title", "date", "provider"),)
 
 
 class Review(models.Model):
