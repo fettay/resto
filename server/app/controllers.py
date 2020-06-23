@@ -2,6 +2,7 @@ from app.serializers import UserSerializer, OrderSerializer
 from app.django_queries import *
 from app.core import Aggregator
 from app.stats import compute_evolution
+from app.constants import TIMEZONE, DJANGO_WEEKDAYS
 
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
@@ -11,6 +12,21 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
+
+from datetime import datetime
+import pytz
+
+
+def _parse_input_date(date_str):
+    if date_str is None:
+        return None
+    
+    tz = pytz.timezone(TIMEZONE)
+
+    try:
+        return tz.localize(datetime.strptime(date_str , "%Y-%m-%d"))
+    except Exception:
+        return None
 
 
 @api_view(['POST'])
@@ -33,6 +49,65 @@ def login(request, format=None):
 @permission_classes([IsAuthenticated])
 def orders_counts(request, format=None):
     query = get_orders_count(request.user, Aggregator.DAY)
+    data = query.all()
+    return Response(data)
+
+
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def sales_total(request, format=None):
+    start_date = _parse_input_date(request.GET.get('start_date', None))
+    end_date = _parse_input_date(request.GET.get('end_date', None))
+    query = get_sales_total(request.user, start_date, end_date)
+    data = query.all()
+    return Response(data)
+
+
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def orders_per_weekday(request, format=None):
+    start_date = _parse_input_date(request.GET.get('start_date', None))
+    end_date = _parse_input_date(request.GET.get('end_date', None))
+    query = get_orders_per_weekday(request.user, start_date, end_date)
+    data = query.all()
+    formatted = map(lambda value: {'count': value['count'],
+                                   'day': DJANGO_WEEKDAYS[value['date__week_day']],
+                                   'restaurant': value['restaurant__name']},
+                    data)
+    return Response(formatted)
+
+
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def orders_resto_count(request, format=None):
+    start_date = _parse_input_date(request.GET.get('start_date', None))
+    end_date = _parse_input_date(request.GET.get('end_date', None))
+    query = get_orders_resto_count(request.user, Aggregator.DAY, start_date, end_date)
+    data = query.all()
+    return Response(data)
+
+
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def sales_resto_total(request, format=None):
+    start_date = _parse_input_date(request.GET.get('start_date', None))
+    end_date = _parse_input_date(request.GET.get('end_date', None))
+    query = get_sales_resto_total(request.user, Aggregator.DAY, start_date, end_date)
+    data = query.all()
+    return Response(data)
+
+
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def sales_resto_average(request, format=None):
+    start_date = _parse_input_date(request.GET.get('start_date', None))
+    end_date = _parse_input_date(request.GET.get('end_date', None))
+    query = get_sales_resto_average(request.user, Aggregator.DAY, start_date, end_date)
     data = query.all()
     return Response(data)
 
@@ -70,16 +145,3 @@ def top_numbers(request, format=None):
     data = {k: compute_evolution(v[0], 7, 'created_day', v[1]) for k, v in data_list.items()}
     data = {k: {'value': value, 'change': change} for k, (value, change) in data.items()}
     return Response(data)
-
-
-# @api_view(['GET'])
-# @authentication_classes([SessionAuthentication])
-# @permission_classes([IsAuthenticated])
-# def me(request, format=None):
-#     content = {
-#         'user': unicode(request.user),  # `django.contrib.auth.User` instance.
-#         'auth': unicode(request.auth),  # None
-#     }
-#     return Response(content)
-
-# Create your views here.

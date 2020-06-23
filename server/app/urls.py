@@ -15,5 +15,10 @@ urlpatterns = [
     url(r'^orders_count', orders_counts),
     url(r'^meals_count', meals_count),
     url(r'^last_orders', last_orders),
-    url(r'^top_numbers', top_numbers)
+    url(r'^top_numbers', top_numbers),
+    url(r'^sales_total', sales_total),
+    url(r'^orders_per_weekday', orders_per_weekday),
+    url(r'^orders_resto_count', orders_resto_count),
+    url(r'^sales_resto_total', sales_resto_total),
+    url(r'^sales_resto_average', sales_resto_average)  
 ]
