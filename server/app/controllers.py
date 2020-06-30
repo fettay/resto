@@ -7,13 +7,21 @@ from app.constants import TIMEZONE, DJANGO_WEEKDAYS
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from django.http import JsonResponse
+from django.core.mail import EmailMultiAlternatives
+from django.dispatch import receiver
+from django.template.loader import render_to_string
+from django.shortcuts import render
+from django.urls import reverse
+from django.conf import settings
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from django_rest_passwordreset.signals import reset_password_token_created
 
 from datetime import datetime
+import socket
 import pytz
 
 
@@ -145,3 +153,36 @@ def top_numbers(request, format=None):
     data = {k: compute_evolution(v[0], 7, 'created_day', v[1]) for k, v in data_list.items()}
     data = {k: {'value': value, 'change': change} for k, (value, change) in data.items()}
     return Response(data)
+
+
+@receiver(reset_password_token_created)
+def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs):
+    # send an e-mail to the user
+    context = {
+        'username': reset_password_token.user.first_name,
+        'reset_password_url': settings.BASE_URL + "/{}?token={}".format('password_reset', reset_password_token.key)
+    }
+
+    # render email text
+    email_plaintext_message = render_to_string('email/user_reset_password.txt', context)
+
+    msg = EmailMultiAlternatives(
+        # title:
+        "Password Reset for {title}".format(title="Forecast"),
+        # message:
+        email_plaintext_message,
+        # from:
+        "noreply@forecasteat.com",
+        # to:
+        [reset_password_token.user.email]
+    )
+    # msg.attach_alternative(email_html_message, "text/html")
+    msg.send()
+
+
+def reset_password(req):
+    token = req.GET.get('token')
+    if token is None:
+        return Response('No token provided', 400)
+    return render(req, 'reset_password.html',
+                  {'token': token, 'form_url': settings.BASE_URL + "/reset_password/confirm/"})

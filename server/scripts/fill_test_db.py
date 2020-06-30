@@ -3,7 +3,7 @@ import os
 import pandas as pd
 
 
-os.environ['DJANGO_SETTINGS_MODULE'] = "resto_server.settings"
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'resto_server.test_settings')
 django.setup()
 
 

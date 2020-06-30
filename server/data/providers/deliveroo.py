@@ -13,10 +13,13 @@ from urllib.parse import quote
 from getpass import getpass
 from collections import namedtuple
 from multiprocessing import Pool
+import random
+import string
 
 
 LOGIN_URL = "https://restaurant-hub.deliveroo.net/api/session"
 RESTO_URL = "https://restaurant-hub.deliveroo.net/api/restaurants/{restaurant_id}"
+REGISTER_URL = "https://restaurant-hub.deliveroo.net/api/reset-password"
 ORDERS_URL = RESTO_URL + "/orders?date={date}&end_date={date}&starting_after={start_after}&sort_date={sort_date}&with_summary=no"
 ITEMS_URL  = "https://restaurant-hub.deliveroo.net/api/orders/{order_id}"
 REVIEWS_URL = RESTO_URL + "/reviews?stars=&sort_date={sort_date}&starting_after={start_after}"
@@ -25,6 +28,10 @@ PROVIDER_NAME = 'Deliveroo'
 
 
 MySqlInput = namedtuple('MySqlInput', ['model', 'data'])
+
+def generate_random_password(length=10):
+    password_characters = string.ascii_letters + string.digits + string.punctuation
+    return ''.join(random.choice(password_characters) for i in range(length))
 
 
 @retry(ValueError, tries=5, delay=2)
@@ -67,6 +74,15 @@ class DeliverooApi(ProviderApi):
             raise LoginError('Wrong credentials')
         return res.json()
 
+    @staticmethod
+    def _register(token, password):
+        res = requests.post(REGISTER_URL, json={'password': password,
+                                                'password_confirmation': password,
+                                                'reset_token': token})
+        if res.status_code != 200:
+            raise LoginError('Wrong link')
+        return res.json()
+
     def set_credentials(self):
         try:
             Credentials.objects.get(owner=self._user, provider=PROVIDER_NAME)
@@ -75,10 +91,11 @@ class DeliverooApi(ProviderApi):
         except Credentials.DoesNotExist:
             pass
         while True:
-            email = input("Enter your deliveroo-hub username: ")
-            password = getpass("Enter your deliveroo-hub password: ")
+            email = input("Enter the email used for the setup: ")
+            token = input("Enter the setup link: ").split('/')[-1]
+            password = generate_random_password()
             try:
-                login = self._login_api(email, password)
+                login = self._register(token, password)
                 break
             except LoginError:
                 print("Invalid credentials retrying")

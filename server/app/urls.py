@@ -20,5 +20,6 @@ urlpatterns = [
     url(r'^orders_per_weekday', orders_per_weekday),
     url(r'^orders_resto_count', orders_resto_count),
     url(r'^sales_resto_total', sales_resto_total),
-    url(r'^sales_resto_average', sales_resto_average)  
+    url(r'^sales_resto_average', sales_resto_average),
+    url(r'^password_reset', reset_password)
 ]
