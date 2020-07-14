@@ -1,0 +1,24 @@
+version: '3'
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file: test_server.env
+    command: /bin/sh -c "python manage.py migrate && python manage.py runserver"
+    depends_on:
+      - "db"
+      - "rabbitmq"
+  rabbitmq:
+          image: "rabbitmq:3"
+  worker:
+    build: .
+    env_file: test_server.env
+    command: ["celery", "-A", "resto_server", "worker", "-l", "info"]
+    depends_on:
+      - "rabbitmq"
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: password

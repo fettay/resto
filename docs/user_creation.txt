@@ -1,0 +1,8 @@
+1. Connect to django admin and create a new user with the customer email
+2. Get email authorization from the user using a unique forecasteat email
+3. Go to gmail, open the deliveroo email for the user and copy the link
+4. Connect to django admin page and click on credentialss add+
+5. Select the user registration email, and enter the provider (deliveroo), the forecasteat email used in 1. and the link used in 2.
+
+
+You are done, the user will receive a mail when data is ready

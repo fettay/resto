@@ -1,6 +1,7 @@
 from app.controllers import *
 from django.conf.urls import url, include
 from rest_framework import routers
+from django_rest_passwordreset.views import reset_password_request_token, reset_password_confirm
 
 
 # Routers provide an easy way of automatically determining the URL conf.
@@ -21,5 +22,7 @@ urlpatterns = [
     url(r'^orders_resto_count', orders_resto_count),
     url(r'^sales_resto_total', sales_resto_total),
     url(r'^sales_resto_average', sales_resto_average),
-    url(r'^password_reset', reset_password)
+    url(r'^password_reset', reset_password),
+    url(r'^reset_password', reset_password_request_token),
+    url(r'^confirm_reset_password', reset_password_confirm)
 ]

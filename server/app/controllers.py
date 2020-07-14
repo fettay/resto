@@ -3,6 +3,8 @@ from app.django_queries import *
 from app.core import Aggregator
 from app.stats import compute_evolution
 from app.constants import TIMEZONE, DJANGO_WEEKDAYS
+from app.models import Credentials
+from app.tasks import onboard_user
 
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
@@ -13,12 +15,15 @@ from django.template.loader import render_to_string
 from django.shortcuts import render
 from django.urls import reverse
 from django.conf import settings
+from django.db.models.signals import post_save
+from django.utils.crypto import get_random_string
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from django_rest_passwordreset.signals import reset_password_token_created
+import requests
 
 from datetime import datetime
 import socket
@@ -80,6 +85,7 @@ def orders_per_weekday(request, format=None):
     end_date = _parse_input_date(request.GET.get('end_date', None))
     query = get_orders_per_weekday(request.user, start_date, end_date)
     data = query.all()
+    formatted = {'data': {}, 'resto_names': []}
     formatted = map(lambda value: {'count': value['count'],
                                    'day': DJANGO_WEEKDAYS[value['date__week_day']],
                                    'restaurant': value['restaurant__name']},
@@ -168,7 +174,7 @@ def password_reset_token_created(sender, instance, reset_password_token, *args, 
 
     msg = EmailMultiAlternatives(
         # title:
-        "Password Reset for {title}".format(title="Forecast"),
+        "Password Reset for {title}".format(title="ForecastEat"),
         # message:
         email_plaintext_message,
         # from:
@@ -180,9 +186,23 @@ def password_reset_token_created(sender, instance, reset_password_token, *args, 
     msg.send()
 
 
+@receiver(post_save, sender=Credentials)
+def download_data(sender, credentials, **kwargs):
+    print("Received creation")
+    onboard_user.delay(credentials.owner.id, credentials.provider)
+
+
 def reset_password(req):
     token = req.GET.get('token')
     if token is None:
         return Response('No token provided', 400)
     return render(req, 'reset_password.html',
-                  {'token': token, 'form_url': settings.BASE_URL + "/reset_password/confirm/"})
+                  {'token': token, 'form_url': settings.BASE_URL + "/confirm_reset_password",
+                   "redirect_url": settings.BASE_URL + "/"})
+
+
+# @receiver(pre_save, sender=UserSerializer, dispatch_uid="user_random_password")
+# def update_stock(sender, user, **kwargs):
+#     if user.password is None:
+#         user.set_password(get_random_string())
+#         user.save()

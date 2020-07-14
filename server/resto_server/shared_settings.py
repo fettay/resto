@@ -48,15 +48,14 @@ INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders',
     'app.apps.AppConfig',
     'rest_framework',
     'rest_framework.authtoken',
-    'django_rest_passwordreset'
-]
+    'django_rest_passwordreset',
+    'django_celery_results']
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -127,3 +126,18 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = '/static/'
+
+APP = {
+    'DEFAULT_FETCH_FROM': 30
+}
+
+
+# CELERY STUFF
+
+CELERY_RESULT_BACKEND = 'django-db'
+
+CELERY_CACHE_BACKEND = 'django-cache'
+
+CELERY_ACCEPT_CONTENT = ['json']
+
+CELERY_TASK_SERIALIZER = 'json'
