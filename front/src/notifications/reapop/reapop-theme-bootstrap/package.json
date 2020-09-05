@@ -33,7 +33,7 @@
   "deprecated": false,
   "description": "Bootstrap theme for Reapop",
   "devDependencies": {
-    "node-sass": "^3.10.1"
+    "node-sass": "^4.14.1"
   },
   "homepage": "https://github.com/LouisBarranqueiro/reapop-theme-bootstrap#readme",
   "keywords": [
