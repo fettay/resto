@@ -104,7 +104,7 @@ const Routes = () => (
     <Route exact path="/" component={login} />
     <Route path="/charts/chartist" component={Chartist} />
     <Route path="/charts/recharts" component={Recharts} />
-    <Route path="/dashboards/analytics" component={Analytics} />
+    <Route path="/dashboards/analytics" component={Geographic} />
     <Route path="/dashboards/geographic" component={Geographic} />
     <Route path="/dashboards/e-commerce" component={ECommerce} />
     <Route path="/demos/demo-1" component={Demo1} />
