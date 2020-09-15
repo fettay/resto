@@ -1,22 +1,14 @@
 import React, {Component} from 'react'
 import Widget from '../../elements/DashboardWidget'
 import ActivityWidget1 from '../../activity-widgets/ActivityWidget1'
-import sales from '../../json/sales-2.json'
-import Last from './last'
-import { thresholdFreedmanDiaconis } from 'd3'
 import axios from "axios"
 
 
-/*
-const Section3 = () => (
-  <Widget title="Sales stream" description="Latest sales and customer actions">
-    <ActivityWidget1 items={sales} amount={6} />
-  </Widget>
-)
-*/
+
+
 
 function format_data2 (x) {
-  return { 'date': x.date ,'title': x.restaurant, 'type': x.amount + '€' };
+  return { 'date': x.date ,'title': x.restaurant.name, 'type': x.amount + '€',  };
 }
 
 class Section3 extends Component{
@@ -27,9 +19,7 @@ class Section3 extends Component{
 
 loadData2() {
   const token = localStorage.getItem('token');
-  axios
-  .get(
-  "http://localhost:8000/last_orders",
+  axios.get(process.env.REACT_APP_SERVER_URL + "/last_orders",
 
     {
     headers:{'Authorization': token}
@@ -48,7 +38,7 @@ componentDidMount(){
   
   render(){
     return(
-      <Widget title="Sales stream" description="Latest sales and customer actions">
+      <Widget title="dernieres ventes" description="Par restaurant">
         <ActivityWidget1 items={this.state.data} amount={6} />
       </Widget>
     )

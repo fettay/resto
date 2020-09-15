@@ -7,7 +7,7 @@ const Section4 = () => (
   <div className="row shipping-status">
     <div className="col">
       <Widget title="Shipping status" description="Latest online sales">
-        <TableWidget4 items={orders} />
+       
       </Widget>
     </div>
   </div>

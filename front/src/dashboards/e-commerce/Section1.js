@@ -33,7 +33,7 @@ const widgets = [
   }
 ]
 
-const Section1 = () => (
+const Section8 = () => (
   <div className="row m-b-20">
     {widgets.map((widget, i) => (
       <div className="col-12 col-md-12 col-lg-3" key={i}>
@@ -46,4 +46,4 @@ const Section1 = () => (
     ))}
   </div>
 )
-export default Section1
+export default Section8

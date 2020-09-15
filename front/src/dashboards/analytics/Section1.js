@@ -1,96 +1,78 @@
-import React from 'react'
+import React, {Component} from 'react'
 import {random} from '../../functions'
 import Widget from '../../elements/DashboardWidget'
 import BarChartWidget9 from '../../bar-chart-widgets/BarChartWidget9'
-import AreaChartWidget9 from '../../area-chart-widgets/AreaChartWidget9'
-import LineChartWidget9 from '../../line-chart-widgets/LineChartWidget9'
+import axios from "axios"
+import Button from 'react-bootstrap/Button'
 
 const chartData = () => {
   let data = []
   for (let i = 0; i < 20; i++) {
-    data.push({name: 'Serie ' + (i + 1), x: random(20, 90)})
+    data.push({name: 'Serie ' + (i + 1), value: random(20, 90)})
   }
   return data
 }
 
-const widgets = [
-  {
+
+const getWidgetData = (data) => {
+  return ({
     color: 'info',
-    height: 60,
+    height: 250,
     widget: {
       bg: 'transparent',
-      color: 'default',
-      subtitle: 'Users',
-      title: '4,412',
-      percent: '+5%',
-      percentColor: 'success',
+      color: 'info',
+      title: 'Dernier mois',
       align: 'left',
       padding: 0,
-      data: chartData()
+      data: data
     }
-  },
-  {
-    color: 'success',
-    height: 60,
-    widget: {
-      bg: 'transparent',
-      color: 'default',
-      subtitle: 'Profit',
-      title: '$9,876',
-      percent: '-2.5%',
-      percentColor: 'danger',
-      align: 'left',
-      padding: 0,
-      data: chartData()
-    }
-  },
-  {
-    color: 'warning',
-    height: 60,
-    widget: {
-      bg: 'transparent',
-      color: 'default',
-      subtitle: 'Orders',
-      title: '578',
-      percent: '+15.2%',
-      percentColor: 'success',
-      align: 'left',
-      padding: 0,
-      data: chartData()
-    }
-  },
-  {
-    color: 'danger',
-    height: 60,
-    widget: {
-      bg: 'transparent',
-      color: 'default',
-      subtitle: 'Sales',
-      title: '154',
+  })
+} 
 
-      align: 'left',
-      padding: 0,
-      data: chartData()
-    }
+function format_data (x) {
+  return {name: x.title , value: x.count};
+}
+
+
+class Section1 extends Component{
+  constructor(props) {
+    super(props);
+    this.state = {widget: getWidgetData(chartData())}
   }
-]
 
-const Section1 = () => (
-  <Widget title="Dashboard stats" description="This week">
-    <div className="row">
-      <div className="col-12 col-sm-6 col-lg-3 m-b-10">
-        <BarChartWidget9 {...widgets[0]} />
-      </div>
-      <div className="col-12 col-sm-6 col-lg-3 m-b-10">
-        <AreaChartWidget9 {...widgets[1]} />
-      </div>
-      <div className="col-12 col-sm-6 col-lg-3 m-b-10">
-        <LineChartWidget9 {...widgets[2]} />
-      </div>
-      <div className="col-12 col-sm-6 col-lg-3 m-b-10">
-        <BarChartWidget9 {...widgets[3]} />
-      </div>
-    </div>
-  </Widget>
-)
+  loadData2() {
+    const token = localStorage.getItem('token');
+    axios.get(process.env.REACT_APP_SERVER_URL + "/meals_count?top=20",
+    {
+    headers:{'Authorization': token}
+    })
+    .then(response => {
+      var meals_count = response.data.map(format_data);
+      console.log(meals_count) 
+      this.setState({widget: getWidgetData(meals_count)})
+    })  
+  }
+
+  componentDidMount(){
+    var response = this.loadData2()
+  }
+
+  
+  render(){
+    return(
+      <Widget title="Ventes par produit" description="Dernier mois(Top20)">
+         <Button href="/documentation/change-log" size="sm" variant="info">voir plus</Button> {' '}
+        <div className="row">
+          <div className="col-12 col-sm-12 col-lg-12 m-b-12">
+            <BarChartWidget9 {...this.state.widget} />
+          </div>
+        </div>
+      </Widget>
+    )
+  }
+    
+  
+}
+
+
 export default Section1

@@ -18,8 +18,9 @@ const widgets = [
     text: random(100, 999)
   }
 ]
-const SamplePieChartWidget1 = () => (
+const SamplePieChartWidget1 = (props) => (
   <PieChartWidget1
+  sliderValues={props.sliderValues}
     widgets={widgets}
     colors={['success', 'warning', 'danger', 'info']}
     data={[20, 10, 30, 40]}

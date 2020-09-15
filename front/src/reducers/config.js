@@ -2,11 +2,11 @@ export function config(
   state = {
     layout: 'default-sidebar-1',
     background: 'light',
-    navbar: 'light',
+    navbar: 'dark',
     topNavigation: 'light',
     logo: 'dark',
-    leftSidebar: 'light',
-    leftSidebarIcons: 'dark',
+    leftSidebar: 'dark',
+    leftSidebarIcons: 'light',
     rightSidebar: false,
     collapsed: false
   },

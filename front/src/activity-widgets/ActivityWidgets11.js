@@ -9,7 +9,7 @@ import 'moment/min/moment-with-locales'
 
 moment.locale('fr');
 
-const ActivityWidget1 = ({items, amount}) => (
+const ActivityWidget11 = ({items, amount}) => (
   <div className="activity-widget-1">
     <table className="table table-striped table-unbordered">
       <tbody>
@@ -22,9 +22,6 @@ const ActivityWidget1 = ({items, amount}) => (
               </span>
             </td>
             <td>{item.title}</td>
-            <td>
-          <Moment fromNow className="text-xs">{item.date}</Moment>
-            </td>
           </tr>
         ))}
       </tbody>
@@ -32,35 +29,13 @@ const ActivityWidget1 = ({items, amount}) => (
   </div>
 )
 
-ActivityWidget1.defaultProps = {
+ActivityWidget11.defaultProps = {
   amount: 10
 }
 
-ActivityWidget1.propTypes = {
+ActivityWidget11.propTypes = {
   items: PropTypes.arrayOf(PropTypes.object).isRequired,
   amount: PropTypes.number
 }
 
-export default ActivityWidget1
-/*
-
-class ActivityWidget1 extends Component{
-  constructor(props) {
-    super(props);
-    this.state = {data}
-  } 
-  loadData2(){
-    const token = localStorage.getItem('token');
-    axios
-    .get(
-      "http://localhost:8000/orders_counts",
-      {
-        headers:{'Authorization': token}
-      })
-      .then()
-    }
-
-
-
-}
-*/
+export default ActivityWidget11

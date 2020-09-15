@@ -16,7 +16,7 @@ const Demo1 = compose(
           layout: 'default-sidebar-1',
           navbar: 'light',
           logo: 'info',
-          leftSidebar: 'dark'
+          leftSidebar: 'sucess'
         }
       })
     }

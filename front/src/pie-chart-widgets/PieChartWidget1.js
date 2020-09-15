@@ -4,12 +4,12 @@ import PieChart1 from './PieChart1'
 import IconWidget4 from '../icon-widgets/IconWidget4'
 //import '../css/donut-chart-widgets/donut-chart-widget-1.css'
 
-const PieChartWidget1 = ({widgets, data, colors, height}) => {
+const PieChartWidget1 = ({widgets, data, colors, height,sliderValues}) => {
   return (
     <div className="donut-chart-widget-1">
       <div className="row align-items-center justify-content-center">
         <div className="col">
-          <PieChart1 data={data} colors={colors} height={height} />
+          <PieChart1 data={data} colors={colors} height={height} sliderValues={sliderValues} />
         </div>
       </div>
       <div className="row text-center">

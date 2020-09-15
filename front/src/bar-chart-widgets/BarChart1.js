@@ -3,11 +3,8 @@ import {connect} from 'react-redux'
 import {ResponsiveContainer, BarChart, Bar, Tooltip} from 'recharts'
 import {random} from '../functions'
 
-const data = Array.from(Array(20).keys()).map(v => {
-  return {name: `key: ${v}`, value: random(20, 100)}
-})
 
-const BarChart1 = ({colors, color, height}) => (
+const BarChart1 = ({colors, color, height, data}) => (
   <ResponsiveContainer width="100%" height={height}>
     <BarChart data={data} margin={{top: 0, right: 0, left: 0, bottom: 0}}>
       <Tooltip

@@ -1,4 +1,4 @@
-import '../css/timeline-widgets/timeline-widget-1.css'
+import '../../css//timeline-widgets/timeline-widget-1.css'
 import React, { Component } from 'react'
 import {
   ResponsiveContainer,
@@ -21,12 +21,12 @@ var groupBy = function(xs, key) {
 function format_data (x) {
   var value = {};
   value['date'] = x[0]['created_day'];
-  x.forEach(element => value[element['restaurant__name']] = element['count']);
+  x.forEach(element => value[element['restaurant__name']] = Math.round(element['count']));
   return(
      value 
   )
 }
-class TimelineWidget1 extends Component{
+class GraphGeo extends Component{
   constructor(props) {
     super(props);
     this.state = {data: [
@@ -51,7 +51,7 @@ class TimelineWidget1 extends Component{
 }
   loadData(){
     const token = localStorage.getItem('token');
-    axios.get(process.env.REACT_APP_SERVER_URL + "/orders_resto_count?start_date=" + this.props.sliderValues[0] +'&end_date=' + this.props.sliderValues[1],
+    axios.get(process.env.REACT_APP_SERVER_URL + "/sales_resto_total?start_date=" + this.props.sliderValues[0] +'&end_date=' + this.props.sliderValues[1],
       {
         headers:{'Authorization': token}
       })
@@ -89,4 +89,4 @@ class TimelineWidget1 extends Component{
   }
 }
 
-export default TimelineWidget1
+export default GraphGeo

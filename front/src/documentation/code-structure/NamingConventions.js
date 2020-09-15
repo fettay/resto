@@ -7,7 +7,7 @@ const NamingConventions = () => (
       <div className="row">
         <div className="col">
           <p>
-            <b>Sigma</b> uses the{' '}
+            <b>a</b> uses the{' '}
             <a
               href="https://github.com/facebookincubator/create-react-app"
               target="_blank"

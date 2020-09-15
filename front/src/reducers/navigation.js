@@ -5,19 +5,19 @@ const urls = [
       {
         url: '',
         icon: 'dashboard',
-        title: 'Historique des ventes',
+        title: 'Ventes',
         
         items: [
           {
             url: '/dashboards/analytics',
             icon: '',
-            title: 'restaurant 1',
+            title: 'Ventes par restaurant',
             items: []
           },
           {
-            url: '/dashboards/geographic',
+            url: '/dashboards/e-commerce',
             icon: '',
-            title: 'restaurant 2',
+            title: 'Ventes par produit',
             items: []
           },
           {

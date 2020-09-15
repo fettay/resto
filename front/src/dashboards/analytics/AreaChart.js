@@ -8,6 +8,7 @@ import {
   Tooltip
 } from 'recharts'
 import axios from 'axios'
+import { CardColumns } from 'reactstrap';
 
 function format_data (x) {
   return {'name': x.created_day, 'Nb ventes': x.count };
@@ -29,9 +30,7 @@ class SampleAreaChart extends Component{
   }
   loadData(){
     const token = localStorage.getItem('token');
-    axios
-    .get(
-      "http://localhost:8000/orders_counts",
+    axios.get(process.env.REACT_APP_SERVER_URL + "/orders_counts",
       {
         headers:{'Authorization': token}
       })
@@ -47,6 +46,11 @@ class SampleAreaChart extends Component{
   componentDidMount(){
     var response = this.loadData()
   }
+  componentDidUpdate(prevProps){
+    if(prevProps.sliderValues !== this.props.sliderValues) {
+      this.loadData()
+    } 
+    }
   transformData(response){
     var created = response.data.map(x => x.created_day);
     console.log(created) 
