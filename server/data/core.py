@@ -7,7 +7,7 @@ class ProviderApi:
     def __init__(self, user):
         self._user = user
 
-    def set_credentials(self):
+    def set_credentials(self, email, setup_link):
         pass
 
     def login(self):

@@ -1,9 +1,17 @@
 django
 django-cors-headers
 djangorestframework
+django-authtools
+requests
 markdown
 django-filter
+numpy
 pandas
 tqdm
 requests
 retry
+celery
+django-celery-results
+django-kombu
+django-rest-passwordreset
+psycopg2

@@ -1,10 +1,10 @@
 from data.core import ProviderApi, LoginError, Provider
 from app.models import Order, Credentials, Meal, Restaurant, Review
 
-from tqdm import tqdm
 import pandas as pd
 from retry import retry
 import requests
+from django.utils.crypto import get_random_string
 
 import json
 import pprint
@@ -13,8 +13,6 @@ from urllib.parse import quote
 from getpass import getpass
 from collections import namedtuple
 from multiprocessing import Pool
-import random
-import string
 
 
 LOGIN_URL = "https://restaurant-hub.deliveroo.net/api/session"
@@ -28,10 +26,6 @@ PROVIDER_NAME = 'Deliveroo'
 
 
 MySqlInput = namedtuple('MySqlInput', ['model', 'data'])
-
-def generate_random_password(length=10):
-    password_characters = string.ascii_letters + string.digits + string.punctuation
-    return ''.join(random.choice(password_characters) for i in range(length))
 
 
 @retry(ValueError, tries=5, delay=2)
@@ -83,22 +77,17 @@ class DeliverooApi(ProviderApi):
             raise LoginError('Wrong link')
         return res.json()
 
-    def set_credentials(self):
+    def set_credentials(self, email, setup_link):
         try:
             Credentials.objects.get(owner=self._user, provider=PROVIDER_NAME)
             print("Already found credentials for the user")
             return
         except Credentials.DoesNotExist:
             pass
-        while True:
-            email = input("Enter the email used for the setup: ")
-            token = input("Enter the setup link: ").split('/')[-1]
-            password = generate_random_password()
-            try:
-                login = self._register(token, password)
-                break
-            except LoginError:
-                print("Invalid credentials retrying")
+    
+        token = setup_link.split('/')[-1]
+        password = get_random_string()
+        login = self._register(token, password)
         credentials = Credentials(owner=self._user, provider=PROVIDER_NAME,
                                   credentials=json.dumps({'email': email, 'password': password}))
         credentials.save()
@@ -243,8 +232,7 @@ class DeliverooApi(ProviderApi):
     
         self._user.save()
         today = pd.Timestamp.today().floor("1d")
-        print('Hey %s, we are loading your data' % (self._user.first_name))
-        for i in tqdm(range(ndays, -1, -1), total=ndays):
+        for i in range(ndays, -1, -1):
             date = today - pd.Timedelta(days=i)
             my_sql_data = self.get_data_per_date(date)
             self.insert_to_mysql(my_sql_data)
@@ -269,7 +257,7 @@ class DeliverooApi(ProviderApi):
         all_meals = []
         all_reviews = []
         for resto in self.restaurants:
-            resto = Restaurant.objects.get(resto_id=resto['id'])
+            resto = Restaurant.objects.get(resto_id=resto['id'], owner=self._user, provider=PROVIDER_NAME)
             resto_orders, resto_meals, resto_reviews = self._fetch_restaurant_data(resto, pd.Timestamp(last_order.date), last_order=last_order)
             all_meals.extend(resto_meals)
             all_orders.extend(resto_orders)
@@ -281,7 +269,7 @@ class DeliverooApi(ProviderApi):
         all_meals = []
         all_reviews = []
         for resto in self.restaurants:
-            resto = Restaurant.objects.get(resto_id=resto['id'])
+            resto = Restaurant.objects.get(resto_id=resto['id'], owner=self._user, provider=PROVIDER_NAME)
             resto_orders, resto_meals, resto_reviews = self._fetch_restaurant_data(resto, date)
             all_meals.extend(resto_meals)
             all_orders.extend(resto_orders)

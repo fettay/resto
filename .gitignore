@@ -150,4 +150,4 @@ yarn-error.log*
 
 *.zip
 /node_modules
-
+*.env
