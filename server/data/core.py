@@ -4,8 +4,9 @@ from collections import namedtuple
 
 
 class ProviderApi:
-    def __init__(self, user):
+    def __init__(self, user, credentials=None):
         self._user = user
+        self._credentials = credentials
 
     def set_credentials(self, email, setup_link):
         pass

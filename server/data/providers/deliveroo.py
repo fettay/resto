@@ -1,5 +1,5 @@
 from data.core import ProviderApi, LoginError, Provider
-from app.models import Order, Credentials, Meal, Restaurant, Review
+from app.models import Order, Credentials, Meal, Restaurant, Review, User
 
 import pandas as pd
 from retry import retry
@@ -7,19 +7,16 @@ import requests
 from django.utils.crypto import get_random_string
 
 import json
-import pprint
-from datetime import datetime
+import logging
 from urllib.parse import quote
-from getpass import getpass
 from collections import namedtuple
-from multiprocessing import Pool
 
 
 LOGIN_URL = "https://restaurant-hub.deliveroo.net/api/session"
 RESTO_URL = "https://restaurant-hub.deliveroo.net/api/restaurants/{restaurant_id}"
 REGISTER_URL = "https://restaurant-hub.deliveroo.net/api/reset-password"
 ORDERS_URL = RESTO_URL + "/orders?date={date}&end_date={date}&starting_after={start_after}&sort_date={sort_date}&with_summary=no"
-ITEMS_URL  = "https://restaurant-hub.deliveroo.net/api/orders/{order_id}"
+ITEMS_URL = "https://restaurant-hub.deliveroo.net/api/orders/{order_id}"
 REVIEWS_URL = RESTO_URL + "/reviews?stars=&sort_date={sort_date}&starting_after={start_after}"
 TIMEZONE = "Europe/Paris"
 PROVIDER_NAME = 'Deliveroo'
@@ -34,7 +31,7 @@ def _get_order_meal_single(args):
     response = requests.get(ITEMS_URL.format(order_id=order_id), headers={'authorization': token})
     if response.status_code != 200:
         raise ValueError
-    items =  response.json()['items']
+    items = response.json()['items']
     all_meals = []
     for item in items:
         all_meals.append((item['name'], item['quantity'], item['category_name']))
@@ -45,10 +42,10 @@ def _get_order_meal_single(args):
 
 class DeliverooApi(ProviderApi):
 
-    def __init__(self, user):
+    def __init__(self, user, credentials=None):
         self._token = None
         self.restaurants = None
-        super().__init__(user)
+        super().__init__(user, credentials)
 
     @retry(ValueError, tries=5, delay=2)
     def _request(self, url):
@@ -58,8 +55,11 @@ class DeliverooApi(ProviderApi):
         return response
 
     def _get_credentials(self):
-        cred = Credentials.objects.get(owner=self._user, provider=PROVIDER_NAME).credentials
-        return json.loads(cred)
+        if self._credentials is not None:
+            return json.loads(self._credentials)
+        
+        self._credentials = Credentials.objects.get(owner=self._user, provider=PROVIDER_NAME).credentials
+        return json.loads(self._credentials)
 
     @staticmethod
     def _login_api(email, password):
@@ -80,17 +80,17 @@ class DeliverooApi(ProviderApi):
     def set_credentials(self, email, setup_link):
         try:
             Credentials.objects.get(owner=self._user, provider=PROVIDER_NAME)
-            print("Already found credentials for the user")
+            logging.info("Already found credentials for the user")
             return
         except Credentials.DoesNotExist:
             pass
     
         token = setup_link.split('/')[-1]
         password = get_random_string()
-        login = self._register(token, password)
+        _ = self._register(token, password)
         credentials = Credentials(owner=self._user, provider=PROVIDER_NAME,
                                   credentials=json.dumps({'email': email, 'password': password}))
-        credentials.save()
+        return credentials
 
     def login(self):
         cred = self._get_credentials()
@@ -129,10 +129,10 @@ class DeliverooApi(ProviderApi):
 
     def _format_meal(self, meal, order):
         meal_dict = {'category': meal[2].lower(),
-                      'title': meal[0].lower(), 
-                      'provider': PROVIDER_NAME,
-                      'owner': self._user,
-                      'quantity': meal[1]}
+                     'title': meal[0].lower(), 
+                     'provider': PROVIDER_NAME,
+                     'owner': self._user,
+                     'quantity': meal[1]}
 
         meal_object = Meal(**meal_dict)
         meal_object.order_id = order.order_id
@@ -141,11 +141,11 @@ class DeliverooApi(ProviderApi):
     def _format_review(self, review, restaurant):
 
         review_dict = {'owner': self._user, 
-                      'restaurant': restaurant,
-                      'provider': PROVIDER_NAME,
-                      'date': pd.Timestamp(review['created_at']).to_pydatetime(),
-                      'comment': review['rating_comment'],
-                      'rating': review['rating_stars']}
+                       'restaurant': restaurant,
+                       'provider': PROVIDER_NAME,
+                       'date': pd.Timestamp(review['created_at']).to_pydatetime(),
+                       'comment': review['rating_comment'],
+                       'rating': review['rating_stars']}
         
         review_object = Review(**review_dict)
         review_object.order_id = review['order_uuid']
@@ -197,7 +197,6 @@ class DeliverooApi(ProviderApi):
 
             orders = self._request(url).json()
             new_orders = [self._format_order(o, resto) for o in orders['orders']]
-            
 
             if len(new_orders) == 0 or (last_timestamp is not None and len(all_orders) > 0 and new_orders[-1].order_id == all_orders[-1].order_id):
                 break 
@@ -210,8 +209,7 @@ class DeliverooApi(ProviderApi):
     def _get_meals_by_resto(self, orders):
         args = [(self._token, order.order_id) for order in orders]
 
-        with Pool(10) as p:
-            all_items = p.map(_get_order_meal_single, args)
+        all_items = map(_get_order_meal_single, args)
         
         meals = [self._format_meal(item, order) for items, order in zip(all_items, orders) for item in items]
         return meals
@@ -220,22 +218,30 @@ class DeliverooApi(ProviderApi):
         all_orders = self._get_orders_by_resto(resto, date, last_order)
         all_meals = self._get_meals_by_resto(all_orders)
         all_reviews = self._get_reviews_by_resto(resto, date)
+        logging.info('Found {orders} orders, {meals} meals, {reviews} reviews for user {user} on {date} and resto {resto}'
+                     .format(orders=len(all_orders), meals=len(all_meals), reviews=len(all_reviews), user=self._user.id,
+                             date=str(date), resto=resto.resto_id))
         return all_orders, all_meals, all_reviews
 
     def onboard(self, ndays):
+        logging.info("Onboarding user %s" % self._user.id)
         user_info = self.login()
         splitted_name = user_info['name'].split(' ')
         self._user.first_name = splitted_name[0]
 
         if len(splitted_name) > 1:
             self._user.last_name = " ".join(splitted_name[1:])
-    
+
+        logging.info("Retrieved personal info for user %s" % self._user.id)
         self._user.save()
         today = pd.Timestamp.today().floor("1d")
+        logging.info("Retrieving data for user %s for %d days" % (self._user.id, ndays))
         for i in range(ndays, -1, -1):
             date = today - pd.Timedelta(days=i)
             my_sql_data = self.get_data_per_date(date)
             self.insert_to_mysql(my_sql_data)
+        
+        logging.info("Finished onboarding for user %s" % self._user.id)
     
     def update_data(self):
         last_order = self._get_last_fetched()

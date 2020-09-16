@@ -28,6 +28,10 @@ import requests
 from datetime import datetime
 import socket
 import pytz
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 def _parse_input_date(date_str):
@@ -187,9 +191,9 @@ def password_reset_token_created(sender, instance, reset_password_token, *args, 
 
 
 @receiver(post_save, sender=Credentials)
-def download_data(sender, credentials, **kwargs):
+def download_data(sender, instance, **kwargs):
     print("Received creation")
-    onboard_user.delay(credentials.owner.id, credentials.provider)
+    onboard_user.delay(instance.owner.id, instance.provider, instance.credentials)
 
 
 def reset_password(req):
