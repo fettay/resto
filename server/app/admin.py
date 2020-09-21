@@ -64,12 +64,10 @@ class CredentialsForm(forms.ModelForm):
         
         logger.info('Setting credentials for the a new user: mail {mail}, setup_link {setup_link}.'
                     .format(mail=self.cleaned_data['email'], setup_link=self.cleaned_data['setup_link']))
-        # try:
-        #     return api.set_credentials(self.cleaned_data['email'], self.cleaned_data['setup_link'])
-        # except LoginError:
-        #     raise forms.ValidationError("There is an issue with the mail or the link")
-        return Credentials(owner=self.cleaned_data['owner'], provider='a',
-                           credentials='a')
+        try:
+            return api.set_credentials(self.cleaned_data['email'], self.cleaned_data['setup_link'])
+        except LoginError:
+            raise forms.ValidationError("There is an issue with the mail or the link")
 
     def save(self, commit=False):
         creds = self.cleaned_data['setup_link']
