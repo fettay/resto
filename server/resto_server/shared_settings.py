@@ -31,7 +31,7 @@ CORS_ALLOW_CREDENTIALS = True
 
 WEB_CONTAINER_URL = 'http://web:8000'
 
-ALLOWED_HOSTS = ['web', 'localhost']
+ALLOWED_HOSTS = ['web', 'localhost', 'forecasteat.com']
 
 REST_FRAMEWORK = {
     # Use Django's standard `django.contrib.auth` permissions,
