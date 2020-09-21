@@ -1,0 +1,15 @@
+version: '3'
+services:
+  web:
+    env_file: test_server.env
+  rabbitmq:
+    image: "rabbitmq:3"
+  worker:
+    env_file: test_server.env
+  db:
+    environment:
+      POSTGRES_PASSWORD: password
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes: 
+  pgdata:

@@ -1,0 +1,35 @@
+version: '3'
+services:
+  web:
+    env_file: prod_server.env
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2GB
+  rabbitmq:
+    image: "rabbitmq:3"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 200M
+  worker:
+    env_file: prod_server.env
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1GB
+  db:
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1GB
+volumes: 
+  pgdata:

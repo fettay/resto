@@ -26,5 +26,3 @@ EMAIL_HOST_USER = 'forecasteat@gmail.com'
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-
-CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'memory://')
