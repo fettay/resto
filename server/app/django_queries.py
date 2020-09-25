@@ -11,28 +11,32 @@ from datetime import datetime
 def get_orders_count(user: User, aggregator: Aggregator):
     qs = Order.objects.filter(owner=user.id).extra({'created_day':"%s(date)" % aggregator.value}).\
     values('created_day').\
-    annotate(count=Count('*'))
+    annotate(count=Count('*')).\
+    order_by('created_day')
     return qs
 
 
 def get_sales_count(user: User, aggregator: Aggregator):
     qs = Order.objects.filter(owner=user.id).extra({'created_day':"%s(date)" % aggregator.value}).\
     values('created_day').\
-    annotate(count=Sum('amount'))
+    annotate(count=Sum('amount')).\
+    order_by('created_day')
     return qs
 
 
 def get_avg_sales(user: User, aggregator: Aggregator):
     qs = Order.objects.filter(owner=user.id).extra({'created_day':"%s(date)" % aggregator.value}).\
     values('created_day').\
-    annotate(count=Avg('amount'))
+    annotate(count=Avg('amount')).\
+    order_by('created_day')
     return qs
 
 
 def get_avg_review(user: User, aggregator: Aggregator):
     qs = Review.objects.filter(owner=user.id).extra({'created_day':"%s(date)" % aggregator.value}).\
     values('created_day').\
-    annotate(count=Avg('rating'))
+    annotate(count=Avg('rating')).\
+    order_by('created_day')
     return qs
 
 
